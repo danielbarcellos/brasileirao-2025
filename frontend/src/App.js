@@ -14,6 +14,24 @@ function App() {
   useEffect(() => {
     fetchStandings();
   }, []);
+  
+  
+  // Função para resetar totalmente (limpar cache do navegador)
+	const hardReset = async () => {
+	  try {
+		// Limpar localStorage
+		localStorage.clear();
+		
+		// Forçar recarregar dados do backend
+		await initializeDatabase();
+		
+		// Recarregar a página
+		window.location.reload();
+	  } catch (err) {
+		console.error('Erro no hard reset:', err);
+	  }
+	};
+
 
   const fetchStandings = async () => {
     try {
@@ -64,6 +82,9 @@ function App() {
           <button onClick={initializeDatabase} className="init-btn" disabled={loading}>
             🔄 Reiniciar Campeonato
           </button>
+		  <button onClick={hardReset} className="reset-btn" style={{background: '#ff9800', marginLeft: '10px'}}>
+  🔄 Reset Total
+</button>
         </div>
       </header>
       
