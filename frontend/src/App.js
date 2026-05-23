@@ -19,6 +19,7 @@ function App() {
   const [isDarkTheme, setIsDarkTheme] = useState(() => {
     return localStorage.getItem("theme") === "dark";
   });
+  const [layoutMode, setLayoutMode] = useState("split"); // split, stacked
 
   useEffect(() => {
     fetchStandings();
@@ -44,6 +45,14 @@ function App() {
   const toggleTheme = () => {
     setIsDarkTheme(!isDarkTheme);
     setTimeout(() => applyTheme(), 0);
+  };
+
+  const toggleLayout = () => {
+    setLayoutMode(layoutMode === "split" ? "stacked" : "split");
+    localStorage.setItem(
+      "layoutMode",
+      layoutMode === "split" ? "stacked" : "split",
+    );
   };
 
   const fetchStandings = async () => {
@@ -126,6 +135,13 @@ function App() {
 
           <div className="header-actions">
             <button
+              className="btn btn-icon"
+              onClick={toggleLayout}
+              title="Alternar layout"
+            >
+              {layoutMode === "split" ? "📱" : "🖥️"}
+            </button>
+            <button
               className="btn btn-secondary"
               onClick={() => setShowScorers(true)}
             >
@@ -141,9 +157,9 @@ function App() {
         </div>
       </header>
 
-      <main>
+      <main className={`app-layout layout-${layoutMode}`}>
         {error && (
-          <div className="error-banner">
+          <div className="error-banner full-width">
             <span>{error}</span>
             <button className="btn btn-outline" onClick={fetchStandings}>
               Tentar novamente
@@ -151,8 +167,13 @@ function App() {
           </div>
         )}
 
-        <StandingsTable standings={standings} />
-        <MatchSimulator onMatchSimulated={fetchStandings} />
+        <div className="standings-column">
+          <StandingsTable standings={standings} />
+        </div>
+
+        <div className="simulator-column">
+          <MatchSimulator onMatchSimulated={fetchStandings} />
+        </div>
       </main>
     </div>
   );

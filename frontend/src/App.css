@@ -2,7 +2,7 @@
    DESIGN SYSTEM - BRASILEIRÃO 2025
    ============================================ */
 
-/* CSS Variables - Tema claro (padrão) */
+/* CSS Variables */
 :root {
   --primary: #2e7d32;
   --primary-dark: #1b5e20;
@@ -35,18 +35,12 @@
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.15);
 
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
-  --radius-xl: 24px;
 
-  --transition-fast: 0.15s ease;
   --transition-base: 0.25s ease;
-  --transition-slow: 0.4s ease;
-
-  --sidebar-width: 280px;
   --header-height: 70px;
 }
 
@@ -61,7 +55,6 @@
   --gray-200: #3d3d3d;
 }
 
-/* Reset */
 * {
   margin: 0;
   padding: 0;
@@ -79,18 +72,10 @@ body {
   background: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* Layout principal */
-.App {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
 }
 
 /* ============================================
-   HEADER MODERNO
+   HEADER
    ============================================ */
 .App-header {
   background: var(--bg-card);
@@ -98,12 +83,11 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
-  backdrop-filter: blur(10px);
   height: var(--header-height);
 }
 
 .header-content {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 0 24px;
   height: 100%;
@@ -139,10 +123,8 @@ body {
 .logo-year {
   color: var(--text-secondary);
   font-weight: 500;
-  font-size: 1rem;
 }
 
-/* Header actions */
 .header-actions {
   display: flex;
   align-items: center;
@@ -175,7 +157,6 @@ body {
 .btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
-  filter: brightness(1.05);
 }
 
 .btn-secondary {
@@ -192,23 +173,18 @@ body {
   box-shadow: var(--shadow-md);
 }
 
-.btn-outline {
-  background: transparent;
-  border: 2px solid var(--border-color);
-  color: var(--text-primary);
-}
-
-.btn-outline:hover {
-  border-color: var(--primary);
-  background: rgba(46, 125, 50, 0.05);
-}
-
 .btn-icon {
   padding: 10px;
   border-radius: 50%;
+  background: var(--gray-100);
+  color: var(--text-primary);
 }
 
-/* Toggle tema */
+.btn-icon:hover {
+  background: var(--gray-200);
+  transform: scale(1.05);
+}
+
 .theme-toggle {
   background: var(--gray-100);
   border: none;
@@ -225,56 +201,91 @@ body {
 }
 
 /* ============================================
-   MAIN CONTENT
+   LAYOUT SPLIT SCREEN
    ============================================ */
-main {
-  flex: 1;
-  max-width: 1400px;
+.app-layout {
+  display: flex;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 32px 24px;
-  width: 100%;
+  padding: 24px;
+  gap: 24px;
+  min-height: calc(100vh - var(--header-height));
+}
+
+/* Layout empilhado (mobile/alternativo) */
+.app-layout.layout-stacked {
+  flex-direction: column;
+}
+
+.app-layout.layout-stacked .standings-column,
+.app-layout.layout-stacked .simulator-column {
+  max-height: none;
+}
+
+.app-layout.layout-stacked .standings-container,
+.app-layout.layout-stacked .simulator-container {
+  max-height: 600px;
+}
+
+/* Colunas */
+.standings-column {
+  flex: 4;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.simulator-column {
+  flex: 6;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ============================================
-   TABELA DE CLASSIFICAÇÃO - REDESIGN
+   TABELA DE CLASSIFICAÇÃO
    ============================================ */
 .standings-container {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-  margin-bottom: 32px;
   border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: calc(100vh - var(--header-height) - 48px);
 }
 
 .standings-header {
-  padding: 24px;
+  padding: 20px 24px;
   border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
+  background: var(--bg-card);
 }
 
 .standings-header h2 {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 8px;
+  margin: 0;
 }
 
 .standings-stats {
   display: flex;
-  gap: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .stat-badge {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
 }
 
@@ -297,35 +308,43 @@ main {
   background: #f44336;
 }
 
-/* Tabela responsiva */
+/* Tabela com scroll */
 .table-responsive {
-  overflow-x: auto;
+  flex: 1;
+  overflow: auto;
 }
 
 .standings-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+
+.standings-table thead {
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  z-index: 10;
 }
 
 .standings-table th {
-  padding: 16px 12px;
+  padding: 14px 12px;
   text-align: center;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--text-secondary);
-  background: var(--gray-50);
   border-bottom: 1px solid var(--border-color);
+  background: var(--bg-card);
 }
 
 .standings-table td {
-  padding: 14px 12px;
+  padding: 12px 12px;
   text-align: center;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   border-bottom: 1px solid var(--border-color);
-  transition: background var(--transition-fast);
+  transition: background var(--transition-base);
 }
 
 .standings-table tbody tr:hover {
@@ -342,15 +361,15 @@ main {
 }
 
 .team-badge {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   background: var(--gray-200);
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.7rem;
+  font-weight: 700;
 }
 
 .standings-table .points {
@@ -359,7 +378,17 @@ main {
   color: var(--primary);
 }
 
-/* Linhas coloridas por posição */
+.positive-sg {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.negative-sg {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+/* Linhas coloridas */
 .row-libertadores {
   background: rgba(76, 175, 80, 0.05);
   border-left: 3px solid #4caf50;
@@ -390,24 +419,27 @@ main {
 }
 
 /* ============================================
-   SIMULADOR - REDESIGN
+   SIMULADOR
    ============================================ */
 .simulator-container {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+  height: calc(100vh - var(--header-height) - 48px);
 }
 
 .simulator-header {
-  padding: 24px;
+  padding: 20px 24px;
   border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
+  background: var(--bg-card);
 }
 
 .simulator-header h3 {
@@ -416,6 +448,7 @@ main {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin: 0;
 }
 
 .round-info {
@@ -427,14 +460,14 @@ main {
 .round-selector {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   background: var(--gray-100);
   padding: 6px 12px;
   border-radius: var(--radius-md);
 }
 
 .round-selector label {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
 }
 
@@ -443,7 +476,7 @@ main {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   background: var(--bg-card);
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   cursor: pointer;
 }
 
@@ -475,31 +508,37 @@ main {
   cursor: not-allowed;
 }
 
-/* Cards de partidas - Grid moderno */
+/* Lista de partidas */
 .matches-section {
-  padding: 24px;
+  flex: 1;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .matches-section h4 {
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   color: var(--text-secondary);
 }
 
 .matches-grid {
+  flex: 1;
+  overflow-y: auto;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  padding-right: 4px;
 }
 
 .match-card {
   background: var(--gray-50);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 14px;
   transition: all var(--transition-base);
   border: 1px solid var(--border-color);
-  cursor: pointer;
 }
 
 .match-card:hover {
@@ -510,7 +549,7 @@ main {
 .match-card.played {
   background: linear-gradient(
     135deg,
-    rgba(76, 175, 80, 0.1) 0%,
+    rgba(76, 175, 80, 0.08) 0%,
     transparent 100%
   );
   border-color: var(--success);
@@ -524,14 +563,15 @@ main {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .home-team,
 .away-team {
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   flex: 1;
+  color: var(--text-primary);
 }
 
 .home-team {
@@ -543,16 +583,16 @@ main {
 }
 
 .vs {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-secondary);
   margin: 0 8px;
 }
 
 .match-result {
   text-align: center;
-  padding-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid var(--border-color);
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 600;
 }
 
@@ -564,9 +604,26 @@ main {
   color: var(--success);
 }
 
-/* ============================================
-   LOADING & ESTADOS
-   ============================================ */
+/* Scrollbar */
+.matches-grid::-webkit-scrollbar,
+.table-responsive::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.matches-grid::-webkit-scrollbar-track,
+.table-responsive::-webkit-scrollbar-track {
+  background: var(--gray-200);
+  border-radius: 3px;
+}
+
+.matches-grid::-webkit-scrollbar-thumb,
+.table-responsive::-webkit-scrollbar-thumb {
+  background: var(--gray-400);
+  border-radius: 3px;
+}
+
+/* Loading */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -574,6 +631,7 @@ main {
   justify-content: center;
   min-height: 100vh;
   gap: 16px;
+  background: var(--bg-primary);
 }
 
 .loader {
@@ -605,67 +663,59 @@ main {
   color: var(--danger-dark);
 }
 
-/* ============================================
-   TOOLTIP & ANIMAÇÕES
-   ============================================ */
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.standings-container,
-.simulator-container {
-  animation: slideInUp 0.4s ease;
+.full-width {
+  width: 100%;
 }
 
 /* ============================================
    RESPONSIVIDADE
    ============================================ */
 @media (max-width: 1024px) {
-  .header-content {
-    padding: 0 20px;
+  .app-layout {
+    flex-direction: column;
   }
 
-  main {
-    padding: 24px 20px;
+  .standings-container,
+  .simulator-container {
+    height: auto;
+    max-height: 500px;
   }
 
-  .standings-table th,
-  .standings-table td {
-    padding: 12px 8px;
-    font-size: 0.75rem;
+  .standings-column,
+  .simulator-column {
+    max-height: none;
   }
 }
 
 @media (max-width: 768px) {
-  :root {
-    --header-height: auto;
-  }
-
   .header-content {
-    flex-direction: column;
-    padding: 12px 16px;
+    padding: 0 16px;
   }
 
-  .header-actions {
-    width: 100%;
-    justify-content: center;
+  .app-layout {
+    padding: 16px;
+    gap: 16px;
   }
 
-  .standings-header {
-    flex-direction: column;
-    align-items: flex-start;
+  .logo-text {
+    font-size: 1.2rem;
   }
 
+  .logo-year {
+    display: none;
+  }
+
+  .standings-header,
   .simulator-header {
-    flex-direction: column;
-    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .matches-section {
+    padding: 16px;
+  }
+
+  .matches-grid {
+    grid-template-columns: 1fr;
   }
 
   .round-info {
@@ -675,39 +725,28 @@ main {
 
   .round-selector {
     width: 100%;
+    justify-content: space-between;
   }
 
   .simulate-btn {
     width: 100%;
     justify-content: center;
   }
-
-  .matches-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .standings-stats {
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
-  .team-badge {
-    display: none;
-  }
 }
 
-@media (max-width: 480px) {
-  main {
-    padding: 16px;
-  }
+/* Animações */
+.standings-column,
+.simulator-column {
+  animation: fadeIn 0.3s ease;
+}
 
-  .standings-table th,
-  .standings-table td {
-    padding: 10px 6px;
-    font-size: 0.7rem;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-
-  .logo-text {
-    font-size: 1.2rem;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
