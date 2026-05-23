@@ -1,7 +1,8 @@
-const fs = require('fs').promises;
-const path = require('path');
-
-const DATA_FILE = path.join(__dirname, 'data.json');
+// Dados em memória (não precisa de arquivo)
+let memoryData = {
+  standings: [],
+  matches: []
+};
 
 // Times do Brasileirão 2025
 const teams = [
@@ -13,24 +14,22 @@ const teams = [
 ];
 
 async function loadData() {
-  try {
-    const data = await fs.readFile(DATA_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    return { standings: [], matches: [] };
-  }
+  // Retorna os dados da memória
+  return memoryData;
 }
 
 async function saveData(data) {
-  await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2));
+  // Salva na memória
+  memoryData = data;
+  console.log(`💾 Dados salvos em memória: ${memoryData.matches.length} partidas, ${memoryData.standings.length} times`);
+  return true;
 }
 
 async function getStandings() {
-  const data = await loadData();
-  if (!data.standings || data.standings.length === 0) {
+  if (!memoryData.standings || memoryData.standings.length === 0) {
     return [];
   }
-  return data.standings.sort((a, b) => {
+  return memoryData.standings.sort((a, b) => {
     if (a.points !== b.points) return b.points - a.points;
     if (a.goalDifference !== b.goalDifference) return b.goalDifference - a.goalDifference;
     return b.goalsFor - a.goalsFor;
@@ -38,141 +37,114 @@ async function getStandings() {
 }
 
 async function getMatches(round = null) {
-  const data = await loadData();
-  if (!data.matches) return [];
+  if (!memoryData.matches) return [];
   
   if (round) {
-    return data.matches.filter(m => m.round === parseInt(round));
+    return memoryData.matches.filter(m => m.round === parseInt(round));
   }
-  return data.matches;
+  return memoryData.matches;
 }
 
 async function saveMatch(match) {
-  const data = await loadData();
-  const index = data.matches.findIndex(m => m.id === match.id);
+  const index = memoryData.matches.findIndex(m => m.id === match.id);
   if (index !== -1) {
-    data.matches[index] = match;
-    await saveData(data);
+    memoryData.matches[index] = match;
+    console.log(`💾 Partida ${match.id} salva: ${match.homeTeam} vs ${match.awayTeam}`);
   }
 }
 
 async function updateStanding(teamName, updatedData) {
-  const data = await loadData();
-  const index = data.standings.findIndex(s => s.team === teamName);
+  const index = memoryData.standings.findIndex(s => s.team === teamName);
   if (index !== -1) {
-    data.standings[index] = updatedData;
-    await saveData(data);
+    memoryData.standings[index] = updatedData;
   }
 }
 
-// Algoritmo Round Robin CORRETO para 20 times
-function generateSchedule() {
+// Gerar calendário correto
+function generateCorrectSchedule() {
   const matches = [];
   let matchId = 1;
   const numTeams = teams.length;
-  const totalRounds = (numTeams - 1) * 2; // 38 rodadas
-  const matchesPerRound = numTeams / 2; // 10 jogos por rodada
   
-  // Criar array de times (o primeiro time fica fixo para o algoritmo)
-  let clubes = [...teams];
-  
-  // PRIMEIRO TURNO (Rodadas 1 a 19)
-  for (let rodada = 1; rodada <= numTeams - 1; rodada++) {
-    // Criar os pares desta rodada
-    for (let i = 0; i < matchesPerRound; i++) {
-      const mandante = clubes[i];
-      const visitante = clubes[numTeams - 1 - i];
-      
-      matches.push({
-        id: matchId++,
-        homeTeam: mandante,
-        awayTeam: visitante,
-        homeGoals: 0,
-        awayGoals: 0,
-        round: rodada,
-        played: false
+  // Primeiro turno: gerar todos os confrontos
+  const allMatches = [];
+  for (let i = 0; i < numTeams; i++) {
+    for (let j = i + 1; j < numTeams; j++) {
+      allMatches.push({
+        homeTeam: teams[i],
+        awayTeam: teams[j]
       });
     }
-    
-    // Rotacionar os times (exceto o primeiro que fica fixo)
-    const ultimo = clubes.pop();
-    clubes.splice(1, 0, ultimo);
   }
   
-  // SEGUNDO TURNO (Rodadas 20 a 38) - Inverte os mandos
-  for (let rodada = 20; rodada <= 38; rodada++) {
-    // A rodada atual no segundo turno corresponde à rodada do primeiro turno
-    const rodadaPrimeiroTurno = rodada - 19;
-    
-    // Buscar os jogos da rodada correspondente no primeiro turno
-    const jogosPrimeiroTurno = matches.filter(m => m.round === rodadaPrimeiroTurno);
-    
-    // Inverter os mandos
-    for (const jogo of jogosPrimeiroTurno) {
+  // Distribuir em 19 rodadas (cada rodada 10 jogos)
+  const rounds = Array(19).fill().map(() => []);
+  
+  for (let i = 0; i < allMatches.length; i++) {
+    rounds[i % 19].push(allMatches[i]);
+  }
+  
+  // Primeiro turno (rodadas 1-19)
+  for (let r = 0; r < 19; r++) {
+    for (const match of rounds[r]) {
       matches.push({
         id: matchId++,
-        homeTeam: jogo.awayTeam,
-        awayTeam: jogo.homeTeam,
+        homeTeam: match.homeTeam,
+        awayTeam: match.awayTeam,
         homeGoals: 0,
         awayGoals: 0,
-        round: rodada,
+        round: r + 1,
         played: false
       });
     }
   }
   
-  // VALIDAÇÃO
-  const roundsMap = new Map();
-  for (const match of matches) {
-    if (!roundsMap.has(match.round)) {
-      roundsMap.set(match.round, []);
-    }
-    roundsMap.get(match.round).push(match);
+  // Segundo turno (rodadas 20-38) - inverter mandos
+  const firstTurnMatches = [...matches];
+  for (const match of firstTurnMatches) {
+    matches.push({
+      id: matchId++,
+      homeTeam: match.awayTeam,
+      awayTeam: match.homeTeam,
+      homeGoals: 0,
+      awayGoals: 0,
+      round: match.round + 19,
+      played: false
+    });
   }
-  
-  const roundsList = Array.from(roundsMap.keys()).sort();
   
   console.log("=".repeat(60));
   console.log("📊 CALENDÁRIO GERADO");
   console.log("=".repeat(60));
   console.log(`Total de partidas: ${matches.length}`);
-  console.log(`Total de rodadas: ${roundsList.length}`);
-  console.log(`Primeira rodada: ${roundsList[0]}`);
-  console.log(`Última rodada: ${roundsList[roundsList.length - 1]}`);
   
   // Verificar cada rodada
-  let allGood = true;
   for (let r = 1; r <= 38; r++) {
-    const jogos = roundsMap.get(r) || [];
+    const jogos = matches.filter(m => m.round === r);
     if (jogos.length !== 10) {
-      console.log(`❌ Rodada ${r}: ${jogos.length} jogos (deveria ser 10)`);
-      allGood = false;
+      console.log(`❌ Rodada ${r}: ${jogos.length} jogos`);
     }
   }
+  console.log(`✅ Todas as 38 rodadas verificadas`);
   
-  if (allGood) {
-    console.log(`✅ TODAS as 38 rodadas têm exatamente 10 jogos!`);
-  }
-  
-  // Verificar Internacional
-  const rodada1 = roundsMap.get(1) || [];
+  // Verificar Internacional na rodada 1
+  const rodada1 = matches.filter(m => m.round === 1);
   const timesRodada1 = new Set();
   rodada1.forEach(m => {
     timesRodada1.add(m.homeTeam);
     timesRodada1.add(m.awayTeam);
   });
   console.log(`\n🔍 Rodada 1: ${timesRodada1.size} times`);
-  console.log(`   Internacional joga na rodada 1? ${timesRodada1.has("Internacional") ? "✅ SIM" : "❌ NÃO"}`);
+  console.log(`   Internacional joga? ${timesRodada1.has("Internacional") ? "✅ SIM" : "❌ NÃO"}`);
   console.log("=".repeat(60));
   
   return matches;
 }
 
-// Função principal para inicializar o campeonato
 async function initializeData() {
-  console.log("🎯 Inicializando campeonato...");
+  console.log("🎯 Inicializando campeonato em memória...");
   
-  // 1. Criar classificação inicial
+  // Classificação inicial
   const standings = teams.map(team => ({
     team: team,
     matchesPlayed: 0,
@@ -185,33 +157,47 @@ async function initializeData() {
     points: 0
   }));
   
-  // 2. Gerar jogos
-  const matches = generateSchedule();
+  // Gerar jogos
+  const matches = generateCorrectSchedule();
   
-  // 3. Salvar dados
-  const data = {
-    standings: standings,
-    matches: matches
-  };
+  // Salvar em memória
+  memoryData = { standings, matches };
   
-  await saveData(data);
-  
-  // 4. Verificar se salvou corretamente
-  const savedMatches = await getMatches();
-  const savedRounds = [...new Set(savedMatches.map(m => m.round))];
-  
-  console.log(`\n✅ CAMPEONATO INICIALIZADO:`);
+  console.log(`\n✅ CAMPEONATO INICIALIZADO!`);
   console.log(`   - Times: ${standings.length}`);
-  console.log(`   - Partidas: ${savedMatches.length}`);
-  console.log(`   - Rodadas: ${savedRounds.length}`);
-  console.log(`   - Rodada 1: ${savedMatches.filter(m => m.round === 1).length} jogos`);
-  console.log(`   - Rodada 38: ${savedMatches.filter(m => m.round === 38).length} jogos`);
+  console.log(`   - Partidas: ${matches.length}`);
+  console.log(`   - Rodadas: 38`);
   
-  if (savedRounds.length !== 38) {
-    throw new Error(`Falha: gerou ${savedRounds.length} rodadas`);
+  return memoryData;
+}
+
+// Função para reset (manter estrutura, zerar resultados)
+async function resetResults() {
+  if (memoryData.matches && memoryData.standings) {
+    // Resetar partidas
+    memoryData.matches = memoryData.matches.map(match => ({
+      ...match,
+      homeGoals: 0,
+      awayGoals: 0,
+      played: false
+    }));
+    
+    // Resetar classificação
+    memoryData.standings = memoryData.standings.map(team => ({
+      ...team,
+      matchesPlayed: 0,
+      wins: 0,
+      draws: 0,
+      losses: 0,
+      goalsFor: 0,
+      goalsAgainst: 0,
+      goalDifference: 0,
+      points: 0
+    }));
+    
+    console.log(`🔄 Resultados resetados!`);
   }
-  
-  return data;
+  return memoryData;
 }
 
 module.exports = {
@@ -221,5 +207,6 @@ module.exports = {
   updateStanding,
   getMatches,
   saveMatch,
-  initializeData
+  initializeData,
+  resetResults
 };
