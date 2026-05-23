@@ -1,37 +1,50 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import './App.css';
-import StandingsTable from './components/StandingsTable';
-import MatchSimulator from './components/MatchSimulator';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import "./App.css";
+import StandingsTable from "./components/StandingsTable";
+import MatchSimulator from "./components/MatchSimulator";
+import ChampionCelebration from "./components/ChampionCelebration";
+import TopScorers from "./components/TopScorers";
 
-const API_URL = 'http://localhost:3001/api';
+const API_URL = "http://localhost:3001/api";
 
 function App() {
   const [standings, setStandings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [champion, setChampion] = useState(null);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebratedChampions, setCelebratedChampions] = useState([]);
+  const [showScorers, setShowScorers] = useState(false);
+  const [isDarkTheme, setIsDarkTheme] = useState(() => {
+    return localStorage.getItem("theme") === "dark";
+  });
 
   useEffect(() => {
     fetchStandings();
+    applyTheme();
   }, []);
-  
-  
-  // Função para resetar totalmente (limpar cache do navegador)
-	const hardReset = async () => {
-	  try {
-		// Limpar localStorage
-		localStorage.clear();
-		
-		// Forçar recarregar dados do backend
-		await initializeDatabase();
-		
-		// Recarregar a página
-		window.location.reload();
-	  } catch (err) {
-		console.error('Erro no hard reset:', err);
-	  }
-	};
 
+  useEffect(() => {
+    if (standings.length > 0) {
+      checkChampion(standings);
+    }
+  }, [standings]);
+
+  const applyTheme = () => {
+    if (isDarkTheme) {
+      document.documentElement.setAttribute("data-theme", "dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+      localStorage.setItem("theme", "light");
+    }
+  };
+
+  const toggleTheme = () => {
+    setIsDarkTheme(!isDarkTheme);
+    setTimeout(() => applyTheme(), 0);
+  };
 
   const fetchStandings = async () => {
     try {
@@ -40,10 +53,32 @@ function App() {
       setStandings(response.data);
       setError(null);
     } catch (err) {
-      console.error('Erro ao buscar classificação:', err);
-      setError('Erro ao carregar classificação. Verifique se o backend está rodando.');
+      console.error("Erro:", err);
+      setError("Não foi possível carregar a classificação");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkChampion = (standingsData) => {
+    if (standingsData.length < 2) return;
+
+    const first = standingsData[0];
+    const second = standingsData[1];
+    const remainingRounds = 38 - first.matchesPlayed;
+    const maxPointsPossible = remainingRounds * 3;
+    const currentAdvantage = first.points - second.points;
+    const isMathChampion = currentAdvantage > maxPointsPossible;
+    const isLateSeason =
+      first.matchesPlayed >= 35 && first.points > second.points + 10;
+
+    if (
+      (isMathChampion || isLateSeason) &&
+      !celebratedChampions.includes(first.team)
+    ) {
+      setChampion(first.team);
+      setShowCelebration(true);
+      setCelebratedChampions([...celebratedChampions, first.team]);
     }
   };
 
@@ -52,10 +87,10 @@ function App() {
       setLoading(true);
       await axios.post(`${API_URL}/initialize`);
       await fetchStandings();
-      alert('✅ Campeonato reiniciado com sucesso!');
+      setCelebratedChampions([]);
+      alert("🏆 Campeonato reiniciado com sucesso!");
     } catch (err) {
-      console.error('Erro ao inicializar:', err);
-      alert('❌ Erro ao reiniciar o campeonato. Verifique se o backend está rodando.');
+      alert("❌ Erro ao reiniciar");
     } finally {
       setLoading(false);
     }
@@ -65,37 +100,57 @@ function App() {
     return (
       <div className="loading-container">
         <div className="loader"></div>
-        <p>Carregando dados do campeonato...</p>
+        <p>Carregando campeonato...</p>
       </div>
     );
   }
 
   return (
     <div className="App">
+      {showCelebration && champion && (
+        <ChampionCelebration
+          champion={champion}
+          onClose={() => setShowCelebration(false)}
+        />
+      )}
+
+      {showScorers && <TopScorers onClose={() => setShowScorers(false)} />}
+
       <header className="App-header">
         <div className="header-content">
-          <h1>
-            <span className="emoji">🏆</span> 
-            Campeonato Brasileiro 2025
-            <span className="emoji">⚽</span>
-          </h1>
-          <button onClick={initializeDatabase} className="init-btn" disabled={loading}>
-            🔄 Reiniciar Campeonato
-          </button>
-		  <button onClick={hardReset} className="reset-btn" style={{background: '#ff9800', marginLeft: '10px'}}>
-  🔄 Reset Total
-</button>
+          <div className="logo-section">
+            <span className="logo-icon">🏆</span>
+            <span className="logo-text">Brasileirão</span>
+            <span className="logo-year">2025</span>
+          </div>
+
+          <div className="header-actions">
+            <button
+              className="btn btn-secondary"
+              onClick={() => setShowScorers(true)}
+            >
+              ⚽ Artilheiros
+            </button>
+            <button className="btn btn-primary" onClick={initializeDatabase}>
+              🔄 Reiniciar
+            </button>
+            <button className="theme-toggle" onClick={toggleTheme}>
+              {isDarkTheme ? "☀️" : "🌙"}
+            </button>
+          </div>
         </div>
       </header>
-      
+
       <main>
         {error && (
           <div className="error-banner">
-            <p>{error}</p>
-            <button onClick={fetchStandings}>Tentar Novamente</button>
+            <span>{error}</span>
+            <button className="btn btn-outline" onClick={fetchStandings}>
+              Tentar novamente
+            </button>
           </div>
         )}
-        
+
         <StandingsTable standings={standings} />
         <MatchSimulator onMatchSimulated={fetchStandings} />
       </main>
