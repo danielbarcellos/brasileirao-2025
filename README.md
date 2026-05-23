@@ -33,7 +33,7 @@ Um sistema completo para simular e acompanhar o Campeonato Brasileiro 2025, com 
 
 1. Clone o repositório:
 ```bash
-git clone https://github.com/seu-usuario/brasileirao-2025.git
+git clone https://github.com/danielbarcellos/brasileirao-2025.git
 cd brasileirao-2025
 ```
 2. Instale as dependências do backend:
